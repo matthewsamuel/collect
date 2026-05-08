@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scraper Dashboard</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3348;
+    --accent: #6c63ff;
+    --accent2: #00d4aa;
+    --text: #e8eaf6;
+    --muted: #8892b0;
+    --danger: #ff6b6b;
+    --warn: #ffd166;
+    --radius: 12px;
+    --font: 'Inter', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
+
+  /* ── HEADER ── */
+  header {
+    background: linear-gradient(135deg, #1a1d27 0%, #12151f 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(12px);
+  }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-icon {
+    width: 36px; height: 36px; background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .logo h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+  .logo span { color: var(--muted); font-size: 13px; margin-top: 1px; display: block; }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+
+  /* ── UPLOAD ZONE ── */
+  #upload-zone {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: calc(100vh - 77px); padding: 40px;
+    text-align: center;
+  }
+  .drop-box {
+    border: 2px dashed var(--border); border-radius: 20px;
+    padding: 60px 80px; cursor: pointer; transition: all .25s;
+    background: var(--surface); max-width: 540px; width: 100%;
+  }
+  .drop-box:hover, .drop-box.drag { border-color: var(--accent); background: #1e2135; }
+  .drop-icon { font-size: 52px; margin-bottom: 20px; }
+  .drop-box h2 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+  .drop-box p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600;
+    cursor: pointer; border: none; transition: all .2s;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #7c74ff; transform: translateY(-1px); }
+  .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: #2a2f47; }
+  .btn-sm { padding: 7px 14px; font-size: 13px; }
+  .file-input { display: none; }
+  .format-badges { display: flex; gap: 8px; margin-top: 20px; justify-content: center; }
+  .badge {
+    padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    border: 1px solid;
+  }
+  .badge-json { color: var(--accent); border-color: var(--accent); background: #6c63ff18; }
+  .badge-csv  { color: var(--accent2); border-color: var(--accent2); background: #00d4aa18; }
+
+  /* ── MAIN CONTENT ── */
+  #dashboard { display: none; padding: 28px 32px; }
+
+  /* ── STATS ROW ── */
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px; transition: border-color .2s;
+  }
+  .stat-card:hover { border-color: var(--accent); }
+  .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 8px; }
+  .stat-value { font-size: 28px; font-weight: 800; line-height: 1; }
+  .stat-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .stat-accent { color: var(--accent); }
+  .stat-green  { color: var(--accent2); }
+  .stat-warn   { color: var(--warn); }
+  .stat-red    { color: var(--danger); }
+
+  /* ── TOOLBAR ── */
+  .toolbar {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;
+  }
+  .search-wrap { position: relative; flex: 1; min-width: 220px; }
+  .search-wrap input {
+    width: 100%; padding: 9px 14px 9px 38px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); font-size: 14px; outline: none; transition: border-color .2s;
+  }
+  .search-wrap input:focus { border-color: var(--accent); }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 15px; }
+  select {
+    padding: 9px 14px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 14px; outline: none; cursor: pointer;
+  }
+  select:focus { border-color: var(--accent); }
+  .view-toggle { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 4px; }
+  .view-toggle button {
+    background: none; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer;
+    color: var(--muted); font-size: 15px; transition: all .2s;
+  }
+  .view-toggle button.active { background: var(--accent); color: #fff; }
+  .result-count { color: var(--muted); font-size: 13px; white-space: nowrap; }
+
+  /* ── GRID VIEW ── */
+  #grid-view { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .product-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    overflow: hidden; transition: all .2s; cursor: default;
+  }
+  .product-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 32px #6c63ff22; }
+  .card-img {
+    width: 100%; height: 180px; object-fit: contain; background: var(--surface2);
+    display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 40px;
+  }
+  .card-img img { width: 100%; height: 100%; object-fit: contain; }
+  .card-body { padding: 16px; }
+  .card-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card-brand { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+  .card-price { font-size: 22px; font-weight: 800; color: var(--accent2); margin-bottom: 8px; }
+  .card-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag {
+    font-size: 11px; padding: 3px 8px; border-radius: 20px; font-weight: 500;
+    background: var(--surface2); color: var(--muted); border: 1px solid var(--border);
+  }
+  .tag-in { color: var(--accent2); border-color: #00d4aa44; background: #00d4aa11; }
+  .tag-out { color: var(--danger); border-color: #ff6b6b44; background: #ff6b6b11; }
+  .card-desc { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card-link { display: block; margin-top: 12px; color: var(--accent); font-size: 13px; text-decoration: none; }
+  .card-link:hover { text-decoration: underline; }
+  .stars { color: var(--warn); font-size: 13px; }
+
+  /* ── TABLE VIEW ── */
+  #table-view { display: none; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  thead th {
+    padding: 12px 16px; text-align: left; font-size: 12px; font-weight: 600;
+    color: var(--muted); text-transform: uppercase; letter-spacing: .5px;
+    border-bottom: 1px solid var(--border); white-space: nowrap; cursor: pointer;
+    user-select: none;
+  }
+  thead th:hover { color: var(--text); }
+  thead th .sort-icon { margin-left: 4px; opacity: .5; }
+  thead th.sorted .sort-icon { opacity: 1; color: var(--accent); }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .15s; }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td { padding: 12px 16px; vertical-align: middle; max-width: 300px; }
+  td.td-price { font-weight: 700; color: var(--accent2); white-space: nowrap; }
+  td.td-img img { width: 48px; height: 48px; object-fit: contain; border-radius: 6px; background: var(--surface2); }
+  td.td-name { font-weight: 500; }
+  td a { color: var(--accent); text-decoration: none; }
+  td a:hover { text-decoration: underline; }
+  .truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; display: block; }
+
+  /* ── EMPTY / NO RESULTS ── */
+  .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty .empty-icon { font-size: 48px; margin-bottom: 12px; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 600px) {
+    header { padding: 14px 16px; }
+    #dashboard { padding: 16px; }
+    .drop-box { padding: 40px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🛒</div>
+    <div>
+      <h1>Scraper Dashboard</h1>
+      <span id="store-name">Geen data geladen</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <span id="last-updated" style="color:var(--muted);font-size:13px;"></span>
+    <label class="btn btn-ghost btn-sm" style="cursor:pointer;">
+      📂 Nieuw bestand
+      <input type="file" class="file-input" id="file-new" accept=".json,.csv">
+    </label>
+  </div>
+</header>
+
+<!-- UPLOAD SCREEN -->
+<div id="upload-zone">
+  <div class="drop-box" id="drop-box">
+    <div class="drop-icon">📦</div>
+    <h2>Laad je scraper-data</h2>
+    <p>Sleep een JSON of CSV-bestand hierheen,<br>of klik om een bestand te kiezen.</p>
+    <div class="format-badges">
+      <span class="badge badge-json">JSON</span>
+      <span class="badge badge-csv">CSV</span>
+    </div>
+    <br>
+    <label class="btn btn-primary" style="cursor:pointer;display:inline-flex;">
+      Bestand kiezen
+      <input type="file" class="file-input" id="file-input" accept=".json,.csv">
+    </label>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <!-- Stats -->
+  <div class="stats-row" id="stats-row"></div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="search" placeholder="Zoek op naam, merk, categorie…">
+    </div>
+    <select id="filter-cat"><option value="">Alle categorieën</option></select>
+    <select id="sort-by"><option value="">Sorteren op…</option></select>
+    <div class="view-toggle">
+      <button id="btn-grid" class="active" title="Grid">⊞</button>
+      <button id="btn-table" title="Tabel">☰</button>
+    </div>
+    <span class="result-count" id="result-count"></span>
+  </div>
+
+  <!-- Views -->
+  <div id="grid-view"></div>
+  <div id="table-view"><table><thead id="t-head"></thead><tbody id="t-body"></tbody></table></div>
+</div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+let allData = [];
+let filtered = [];
+let currentView = 'grid';
+let sortKey = '';
+let sortDir = 1;
+
+// ─── Field detection ─────────────────────────────────────────────────────────
+const fieldMap = {
+  name:        ['name','title','naam','product','product_name','product_title','item','item_name','artikel','omschrijving'],
+  price:       ['price','prijs','cost','kosten','selling_price','sale_price','regular_price','current_price','amount'],
+  image:       ['image','img','image_url','img_url','afbeelding','foto','picture','photo','thumbnail'],
+  url:         ['url','link','href','product_url','page_url'],
+  category:    ['category','categorie','cat','type','afdeling','department','genre'],
+  brand:       ['brand','merk','manufacturer','maker','fabrikant'],
+  description: ['description','beschrijving','desc','omschrijving','details','info'],
+  availability:['availability','beschikbaarheid','stock','voorraad','in_stock','available','status'],
+  rating:      ['rating','beoordeling','score','stars','review_score','avg_rating'],
+  sku:         ['sku','id','product_id','item_id','code','barcode','ean'],
+};
+
+function detect(keys) {
+  const map = {};
+  for (const [canonical, aliases] of Object.entries(fieldMap)) {
+    for (const alias of aliases) {
+      const match = keys.find(k => k.toLowerCase() === alias);
+      if (match && !map[canonical]) { map[canonical] = match; break; }
+    }
+  }
+  return map;
+}
+
+// ─── Parsers ─────────────────────────────────────────────────────────────────
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g,'').trim());
+  return lines.slice(1).filter(l => l.trim()).map(line => {
+    const vals = [];
+    let cur = ''; let inQ = false;
+    for (const ch of line + ',') {
+      if (ch === '"') inQ = !inQ;
+      else if (ch === ',' && !inQ) { vals.push(cur.trim()); cur = ''; }
+      else cur += ch;
+    }
+    return Object.fromEntries(headers.map((h,i) => [h, vals[i] ?? '']));
+  });
+}
+
+function parseJSON(text) {
+  const raw = JSON.parse(text);
+  if (Array.isArray(raw)) return raw;
+  // common wrappers: { data: [], products: [], items: [], results: [] }
+  for (const key of ['data','products','items','results','records','entries']) {
+    if (Array.isArray(raw[key])) return raw[key];
+  }
+  return [raw];
+}
+
+// ─── Formatting helpers ───────────────────────────────────────────────────────
+function fmtPrice(v) {
+  if (!v && v !== 0) return null;
+  const n = parseFloat(String(v).replace(/[^0-9.,]/g,'').replace(',','.'));
+  if (isNaN(n)) return String(v);
+  const sym = String(v).match(/[$€£¥₹]/)?.[0] || '€';
+  return sym + n.toFixed(2);
+}
+
+function isURL(v) { try { return /^https?:\/\//.test(v); } catch { return false; } }
+
+function stockClass(v) {
+  if (!v) return '';
+  const s = String(v).toLowerCase();
+  if (['true','yes','ja','in stock','beschikbaar','op voorraad','available'].includes(s)) return 'tag-in';
+  if (['false','no','nee','out of stock','niet beschikbaar','unavailable'].includes(s)) return 'tag-out';
+  return '';
+}
+
+function stars(n) {
+  const r = Math.round(parseFloat(n));
+  if (isNaN(r)) return '';
+  return '★'.repeat(Math.min(r,5)) + '☆'.repeat(Math.max(0, 5-r));
+}
+
+// ─── Load file ───────────────────────────────────────────────────────────────
+function loadFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const text = e.target.result;
+      allData = file.name.endsWith('.csv') ? parseCSV(text) : parseJSON(text);
+      if (!allData.length) throw new Error('Geen rijen gevonden');
+      initDashboard(file.name);
+    } catch(err) {
+      alert('Fout bij inladen: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ─── Init dashboard ───────────────────────────────────────────────────────────
+function initDashboard(filename) {
+  document.getElementById('upload-zone').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  document.getElementById('store-name').textContent = filename;
+  document.getElementById('last-updated').textContent = new Date().toLocaleString('nl-NL');
+
+  const keys = Object.keys(allData[0] || {});
+  window._fm = detect(keys);
+  window._keys = keys;
+
+  buildStats();
+  buildFilters();
+  buildSortOptions();
+  renderAll();
+}
+
+// ─── Stats ────────────────────────────────────────────────────────────────────
+function buildStats() {
+  const fm = window._fm;
+  const total = allData.length;
+  let prices = [], cats = new Set(), inStock = 0;
+
+  for (const row of allData) {
+    if (fm.price) {
+      const n = parseFloat(String(row[fm.price]).replace(/[^0-9.,]/g,'').replace(',','.'));
+      if (!isNaN(n) && n > 0) prices.push(n);
+    }
+    if (fm.category && row[fm.category]) cats.add(row[fm.category]);
+    if (fm.availability) {
+      const s = String(row[fm.availability]).toLowerCase();
+      if (['true','yes','ja','in stock','beschikbaar','op voorraad','available'].includes(s)) inStock++;
+    }
+  }
+
+  const sym = fm.price ? (String(allData.find(r=>r[fm.price])?.[fm.price]||'').match(/[$€£¥₹]/)?.[0]||'€') : '€';
+  const minP = prices.length ? sym + Math.min(...prices).toFixed(2) : '—';
+  const maxP = prices.length ? sym + Math.max(...prices).toFixed(2) : '—';
+  const avgP = prices.length ? sym + (prices.reduce((a,b)=>a+b,0)/prices.length).toFixed(2) : '—';
+
+  const cards = [
+    { label: 'Totaal producten', value: total, cls: 'stat-accent' },
+    { label: 'Gem. prijs', value: avgP, cls: 'stat-green', sub: `Min ${minP} · Max ${maxP}` },
+    ...(cats.size ? [{ label: 'Categorieën', value: cats.size, cls: 'stat-warn' }] : []),
+    ...(fm.availability ? [{ label: 'Op voorraad', value: inStock, cls: inStock < total/2 ? 'stat-red' : 'stat-green', sub: `${total-inStock} niet beschikbaar` }] : []),
+  ];
+
+  document.getElementById('stats-row').innerHTML = cards.map(c => `
+    <div class="stat-card">
+      <div class="stat-label">${c.label}</div>
+      <div class="stat-value ${c.cls}">${c.value}</div>
+      ${c.sub ? `<div class="stat-sub">${c.sub}</div>` : ''}
+    </div>`).join('');
+}
+
+// ─── Filters ──────────────────────────────────────────────────────────────────
+function buildFilters() {
+  const fm = window._fm;
+  const sel = document.getElementById('filter-cat');
+  sel.innerHTML = '<option value="">Alle categorieën</option>';
+  if (fm.category) {
+    const cats = [...new Set(allData.map(r => r[fm.category]).filter(Boolean))].sort();
+    cats.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o); });
+    sel.style.display = '';
+  } else { sel.style.display = 'none'; }
+}
+
+function buildSortOptions() {
+  const fm = window._fm;
+  const sel = document.getElementById('sort-by');
+  sel.innerHTML = '<option value="">Sorteren op…</option>';
+  if (fm.name) sel.innerHTML += `<option value="${fm.name}_asc">Naam A→Z</option><option value="${fm.name}_desc">Naam Z→A</option>`;
+  if (fm.price) sel.innerHTML += `<option value="${fm.price}_asc">Prijs laag→hoog</option><option value="${fm.price}_desc">Prijs hoog→laag</option>`;
+  if (fm.rating) sel.innerHTML += `<option value="${fm.rating}_desc">Beoordeling hoog→laag</option>`;
+}
+
+// ─── Filter + render ──────────────────────────────────────────────────────────
+function renderAll() {
+  const fm = window._fm;
+  const q = document.getElementById('search').value.toLowerCase();
+  const cat = document.getElementById('filter-cat').value;
+  const sortVal = document.getElementById('sort-by').value;
+
+  filtered = allData.filter(row => {
+    if (cat && fm.category && row[fm.category] !== cat) return false;
+    if (q) {
+      const haystack = [fm.name, fm.brand, fm.category, fm.description]
+        .filter(Boolean).map(f => String(row[f]||'')).join(' ').toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+    return true;
+  });
+
+  if (sortVal) {
+    const [key, dir] = sortVal.split(/_(?=asc|desc)/);
+    const d = dir === 'asc' ? 1 : -1;
+    filtered.sort((a,b) => {
+      let av = a[key] ?? '', bv = b[key] ?? '';
+      const an = parseFloat(String(av).replace(/[^0-9.]/g,'')), bn = parseFloat(String(bv).replace(/[^0-9.]/g,''));
+      if (!isNaN(an) && !isNaN(bn)) return (an-bn)*d;
+      return String(av).localeCompare(String(bv))*d;
+    });
+  }
+
+  document.getElementById('result-count').textContent = `${filtered.length} van ${allData.length} producten`;
+  currentView === 'grid' ? renderGrid() : renderTable();
+}
+
+// ─── Grid ─────────────────────────────────────────────────────────────────────
+function renderGrid() {
+  const fm = window._fm;
+  const el = document.getElementById('grid-view');
+  if (!filtered.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><p>Geen producten gevonden</p></div>'; return; }
+
+  el.innerHTML = filtered.map(row => {
+    const name  = fm.name  ? row[fm.name]  : '';
+    const price = fm.price ? fmtPrice(row[fm.price]) : null;
+    const brand = fm.brand ? row[fm.brand] : '';
+    const cat   = fm.category ? row[fm.category] : '';
+    const desc  = fm.description ? row[fm.description] : '';
+    const img   = fm.image ? row[fm.image] : '';
+    const url   = fm.url  ? row[fm.url]  : '';
+    const avail = fm.availability ? row[fm.availability] : null;
+    const rat   = fm.rating ? row[fm.rating] : null;
+
+    const imgHTML = isURL(img)
+      ? `<div class="card-img"><img src="${img}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='📦'"></div>`
+      : `<div class="card-img">📦</div>`;
+
+    const tags = [
+      cat    ? `<span class="tag">${cat}</span>` : '',
+      avail  ? `<span class="tag ${stockClass(avail)}">${avail}</span>` : '',
+      rat    ? `<span class="stars">${stars(rat)}</span>` : '',
+    ].filter(Boolean).join('');
+
+    return `
+    <div class="product-card">
+      ${imgHTML}
+      <div class="card-body">
+        <div class="card-title">${name || '—'}</div>
+        ${brand ? `<div class="card-brand">${brand}</div>` : ''}
+        ${price ? `<div class="card-price">${price}</div>` : ''}
+        ${tags  ? `<div class="card-meta">${tags}</div>` : ''}
+        ${desc  ? `<div class="card-desc">${desc}</div>` : ''}
+        ${url   ? `<a class="card-link" href="${url}" target="_blank">↗ Bekijk product</a>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── Table ────────────────────────────────────────────────────────────────────
+function renderTable() {
+  const keys = window._keys;
+  const fm   = window._fm;
+
+  document.getElementById('t-head').innerHTML = '<tr>' + keys.map(k => `
+    <th data-key="${k}">
+      ${k} <span class="sort-icon">↕</span>
+    </th>`).join('') + '</tr>';
+
+  const rows = filtered.map(row => '<tr>' + keys.map(k => {
+    let v = row[k] ?? '';
+    if (k === fm.image && isURL(v)) return `<td class="td-img"><img src="${v}" alt="" loading="lazy" onerror="this.src=''"></td>`;
+    if (k === fm.price) return `<td class="td-price">${fmtPrice(v) ?? v}</td>`;
+    if (k === fm.url && isURL(v))  return `<td><a href="${v}" target="_blank" title="${v}">↗ link</a></td>`;
+    if (k === fm.name) return `<td class="td-name"><span class="truncate" title="${v}">${v}</span></td>`;
+    return `<td><span class="truncate" title="${v}">${v}</span></td>`;
+  }).join('') + '</tr>');
+
+  document.getElementById('t-body').innerHTML = rows.join('') || '<tr><td colspan="99" class="empty"><div class="empty-icon">🔍</div><p>Geen producten gevonden</p></td></tr>';
+
+  // Sort on header click
+  document.querySelectorAll('#t-head th').forEach(th => {
+    th.addEventListener('click', () => {
+      const key = th.dataset.key;
+      const dir = th.classList.contains('sorted') && sortDir === 1 ? -1 : 1;
+      sortDir = dir;
+      document.querySelectorAll('#t-head th').forEach(t => t.classList.remove('sorted'));
+      th.classList.add('sorted');
+      th.querySelector('.sort-icon').textContent = dir === 1 ? '↑' : '↓';
+      filtered.sort((a,b) => {
+        const an = parseFloat(String(a[key]||'').replace(/[^0-9.]/g,'')), bn = parseFloat(String(b[key]||'').replace(/[^0-9.]/g,''));
+        if (!isNaN(an) && !isNaN(bn)) return (an-bn)*dir;
+        return String(a[key]||'').localeCompare(String(b[key]||''))*dir;
+      });
+      renderTable();
+    });
+  });
+}
+
+// ─── View toggle ──────────────────────────────────────────────────────────────
+document.getElementById('btn-grid').addEventListener('click', () => {
+  currentView = 'grid';
+  document.getElementById('btn-grid').classList.add('active');
+  document.getElementById('btn-table').classList.remove('active');
+  document.getElementById('grid-view').style.display = 'grid';
+  document.getElementById('table-view').style.display = 'none';
+  renderGrid();
+});
+document.getElementById('btn-table').addEventListener('click', () => {
+  currentView = 'table';
+  document.getElementById('btn-table').classList.add('active');
+  document.getElementById('btn-grid').classList.remove('active');
+  document.getElementById('grid-view').style.display = 'none';
+  document.getElementById('table-view').style.display = 'block';
+  renderTable();
+});
+
+// ─── Event listeners ─────────────────────────────────────────────────────────
+document.getElementById('search').addEventListener('input', renderAll);
+document.getElementById('filter-cat').addEventListener('change', renderAll);
+document.getElementById('sort-by').addEventListener('change', renderAll);
+
+['file-input','file-new'].forEach(id => {
+  document.getElementById(id).addEventListener('change', e => {
+    if (e.target.files[0]) loadFile(e.target.files[0]);
+    e.target.value = '';
+  });
+});
+
+// ─── Drag & drop ──────────────────────────────────────────────────────────────
+const box = document.getElementById('drop-box');
+box.addEventListener('dragover', e => { e.preventDefault(); box.classList.add('drag'); });
+box.addEventListener('dragleave', () => box.classList.remove('drag'));
+box.addEventListener('drop', e => {
+  e.preventDefault(); box.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f) loadFile(f);
+});
+</script>
+</body>
+</html>
