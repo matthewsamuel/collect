@@ -1,0 +1,32 @@
+{
+  "belgian_supermarkets_online_groceries": [
+    {
+      "name": "Colruyt",
+      "online_service": "Collect&Go",
+      "main_site": "https://www.colruyt.be",
+      "online_shop_url": "https://www.collectandgo.be",
+      "delivery_options": ["pickup at 245+ collection points", "home delivery"]
+    },
+    {
+      "name": "Delhaize",
+      "online_service": "Delhaize Delivery / Collect",
+      "main_site": "https://www.delhaize.be",
+      "online_shop_url": "https://www.delhaize.be/nl/shoponline",
+      "delivery_options": ["home delivery", "pickup at store (Collect)"]
+    },
+    {
+      "name": "Carrefour",
+      "online_service": "Carrefour Drive / Delivery / Fast Delivery",
+      "main_site": "https://www.carrefour.be",
+      "online_shop_url": "https://www.carrefour.be/fr/services/courses-en-ligne/og.html",
+      "delivery_options": ["drive (next-day pickup)", "home delivery (next-day)", "fast delivery (same-day)"]
+    },
+    {
+      "name": "Albert Heijn",
+      "online_service": "AH Online bestellen",
+      "main_site": "https://www.ah.be",
+      "online_shop_url": "https://www.ah.be",
+      "delivery_options": ["home delivery (limited regions in Flanders/Brussels)", "pickup at Pick Up Points"]
+    }
+  ]
+}

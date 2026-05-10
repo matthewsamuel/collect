@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -m venv .venv)",
+      "Bash(.venv/bin/python --version)",
+      "Bash(.venv/bin/pip install *)",
+      "Bash(.venv/bin/playwright install *)",
+      "Bash(.venv/bin/pip freeze *)",
+      "Bash(mkdir -p /home/warre/Projects/pricecomp/scrapers /home/warre/Projects/pricecomp/data)",
+      "Bash(.venv/bin/python -c ' *)",
+      "Bash(.venv/bin/python main.py --help)",
+      "Bash(cd * && source .venv/bin/activate && python*)"
+      ],
+    "additionalDirectories": [
+      "/home/warre/Projects/pricecomp"
+    ]
+  }
+}
